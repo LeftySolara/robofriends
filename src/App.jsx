@@ -1,48 +1,55 @@
-import { useEffect, useState } from "react";
-import CardList from "./CardList";
-import SearchBox from "./Searchbox";
+import { useEffect } from "react";
+import CardList from "./components/CardList/CardList";
+import SearchBox from "./components/Searchbox/Searchbox";
+import ErrorBoundry from "./components/ErrorBoundry/ErrorBoundry";
 import "./App.css";
+import { connect } from "react-redux";
+import { fetchAllRobots, setSearchField } from "./actions";
 
-const App = () => {
-  const [robotList, setRobotList] = useState([]);
-  const [filteredRobotList, setFilteredRobotList] = useState([]);
-  const [searchCriteria, setSearchCriteria] = useState("");
-
-  useEffect(() => {
-    async function fetchData() {
-      const response = await fetch(
-        "https://jsonplaceholder.typicode.com/users"
-      );
-      const json = await response.json();
-      setRobotList(json);
-      setFilteredRobotList(json);
-    }
-    fetchData().catch(console.error);
-  }, []);
-
-  // TODO: debounce this
-  const onSearchChange = (event) => {
-    setSearchCriteria(event.target.value);
-    if (searchCriteria === "" || !searchCriteria) {
-      setFilteredRobotList(robotList);
-    } else {
-      setFilteredRobotList(() =>
-        robotList.filter((robot) => {
-          return robot.name
-            .toLowerCase()
-            .includes(searchCriteria.toLowerCase());
-        })
-      );
-    }
+const mapStateToProps = (state) => {
+  return {
+    searchField: state.searchRobots.searchField,
+    robotList: state.fetchRobots.robotList,
+    isPending: state.fetchRobots.isPending,
+    error: state.fetchRobots.error,
   };
+};
 
-  return (
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+    onFetchRobots: () => dispatch(fetchAllRobots()),
+  };
+};
+
+const App = ({
+  searchField,
+  robotList,
+  onSearchChange,
+  onFetchRobots,
+  isPending,
+}) => {
+  useEffect(() => {
+    onFetchRobots();
+  }, [onFetchRobots]);
+
+  const filteredRobots = robotList
+    ? robotList.filter((robot) => {
+        return robot.name.toLowerCase().includes(searchField.toLowerCase());
+      })
+    : [];
+
+  return isPending ? (
+    <h1>Loading...</h1>
+  ) : (
     <div className="tc">
       <h1 className="f1">RoboFriends</h1>
-      <SearchBox searchCriteria={searchCriteria} onChange={onSearchChange} />
-      <CardList robots={filteredRobotList} />
+      <SearchBox searchCriteria={searchField} onChange={onSearchChange} />
+      <ErrorBoundry>
+        <CardList robots={filteredRobots} />
+      </ErrorBoundry>
     </div>
   );
 };
 
-export default App;
+export default connect(mapStateToProps, mapDispatchToProps)(App);
