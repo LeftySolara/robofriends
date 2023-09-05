@@ -7,6 +7,7 @@ import { createLogger } from "redux-logger";
 import { searchRobots, fetchRobots } from "./reducers";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
+import * as serviceworker from "./serviceWorkerRegistration";
 import App from "./App";
 
 const logger = createLogger();
@@ -28,6 +29,8 @@ root.render(
     </Provider>
   </React.StrictMode>
 );
+
+serviceworker.register();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
